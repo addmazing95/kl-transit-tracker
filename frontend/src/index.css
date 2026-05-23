@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* MapLibre popup theming for our pastel UI */
+.maplibregl-popup-content {
+  background: #FBF7F0;
+  color: #3F3A4C;
+  border: 1px solid #E5DCC8;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(63, 58, 76, 0.08);
+  font-size: 12px;
+  padding: 8px 10px;
+}
+.maplibregl-popup-tip {
+  border-top-color: #FBF7F0 !important;
+  border-bottom-color: #FBF7F0 !important;
+}
+.maplibregl-ctrl-attrib {
+  background: rgba(251, 247, 240, 0.85);
+}
+.maplibregl-ctrl-attrib a {
+  color: #6B6477;
+}
+.maplibregl-ctrl-group {
+  background: #FBF7F0 !important;
+  border: 1px solid #E5DCC8 !important;
+  box-shadow: 0 2px 8px rgba(63, 58, 76, 0.08) !important;
+}

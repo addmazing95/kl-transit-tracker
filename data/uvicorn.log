@@ -1,0 +1,56 @@
+INFO:     Started server process [2236]
+INFO:     Waiting for application startup.
+INFO:kl-transit:Database ready at sqlite:///./data/transit.db
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Added job "poll_once" to job store "default"
+INFO:apscheduler.scheduler:Added job "poll_once" to job store "default"
+INFO:apscheduler.scheduler:Added job "run_once" to job store "default"
+INFO:apscheduler.scheduler:Added job "run_once" to job store "default"
+INFO:apscheduler.scheduler:Added job "run_daily" to job store "default"
+INFO:apscheduler.scheduler:Added job "run_once" to job store "default"
+INFO:apscheduler.scheduler:Added job "run_once" to job store "default"
+INFO:apscheduler.scheduler:Added job "poll_once" to job store "default"
+INFO:apscheduler.scheduler:Added job "poll_once" to job store "default"
+INFO:apscheduler.scheduler:Scheduler started
+INFO:app.scheduler:Scheduler started with 9 jobs
+INFO:apscheduler.scheduler:Removed job scrape_news_initial
+INFO:apscheduler.scheduler:Removed job poll_ktmb_initial
+INFO:apscheduler.scheduler:Removed job sim_rapid_rail_initial
+INFO:     Application startup complete.
+INFO:apscheduler.executors.default:Running job "run_once (trigger: date[2026-05-23 15:34:23 +08], next run at: 2026-05-23 15:34:23 +08)" (scheduled at 2026-05-23 15:34:23.500527+08:00)
+INFO:apscheduler.executors.default:Running job "poll_once (trigger: date[2026-05-23 15:34:23 +08], next run at: 2026-05-23 15:34:23 +08)" (scheduled at 2026-05-23 15:34:23.500636+08:00)
+INFO:apscheduler.executors.default:Running job "poll_once (trigger: date[2026-05-23 15:34:23 +08], next run at: 2026-05-23 15:34:23 +08)" (scheduled at 2026-05-23 15:34:23.500700+08:00)
+INFO:app.ingestion.rapid_rail_sim:rapid_rail_sim: cached 14 canonical trips \u2192 2638 phantom trips across 7 routes
+INFO:app.ingestion.rapid_rail_sim:rapid_rail_sim: emitted 155 synthetic vehicles at t=56064s (local 15:34:24)
+INFO:apscheduler.executors.default:Job "poll_once (trigger: date[2026-05-23 15:34:23 +08], next run at: 2026-05-23 15:34:23 +08)" executed successfully
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:httpx:HTTP Request: GET https://news.google.com/rss/search?q=%22Rapid+KL%22+OR+%22MRT%22+OR+%22LRT%22+OR+%22KTM+Komuter%22+disruption&hl=en-MY&gl=MY&ceid=MY:en "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: GET https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb "HTTP/1.1 301 Moved Permanently"
+INFO:httpx:HTTP Request: GET https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb/ "HTTP/1.1 200 OK"
+INFO:app.ingestion.ktmb:KTMB poll ok: 13 vehicles (ts=2026-05-23T07:34:24.493831+00:00)
+INFO:apscheduler.executors.default:Job "poll_once (trigger: date[2026-05-23 15:34:23 +08], next run at: 2026-05-23 15:34:23 +08)" executed successfully
+INFO:httpx:HTTP Request: GET https://myrapid.com.my/announcements/ "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: GET https://www.ktmb.com.my/ "HTTP/1.1 200 OK"
+INFO:apscheduler.executors.default:Job "run_once (trigger: date[2026-05-23 15:34:23 +08], next run at: 2026-05-23 15:34:23 +08)" executed successfully
+INFO:apscheduler.executors.default:Running job "poll_once (trigger: interval[0:00:20], next run at: 2026-05-23 15:35:03 +08)" (scheduled at 2026-05-23 15:34:43.484018+08:00)
+INFO:apscheduler.executors.default:Running job "poll_once (trigger: interval[0:00:20], next run at: 2026-05-23 15:35:03 +08)" (scheduled at 2026-05-23 15:34:43.484240+08:00)
+INFO:app.ingestion.rapid_rail_sim:rapid_rail_sim: emitted 154 synthetic vehicles at t=56083s (local 15:34:43)
+INFO:apscheduler.executors.default:Job "poll_once (trigger: interval[0:00:20], next run at: 2026-05-23 15:35:03 +08)" executed successfully
+INFO:apscheduler.executors.default:Running job "run_once (trigger: interval[0:00:20], next run at: 2026-05-23 15:35:03 +08)" (scheduled at 2026-05-23 15:34:43.484323+08:00)
+INFO:app.ingestion.disruption:disruption: {'new': 0, 'still_active': 2, 'resolved': 6}
+INFO:apscheduler.executors.default:Job "run_once (trigger: interval[0:00:20], next run at: 2026-05-23 15:35:03 +08)" executed successfully
+INFO:apscheduler.executors.default:Running job "run_once (trigger: interval[0:00:20], next run at: 2026-05-23 15:35:03 +08)" (scheduled at 2026-05-23 15:34:43.484422+08:00)
+INFO:apscheduler.executors.default:Job "run_once (trigger: interval[0:00:20], next run at: 2026-05-23 15:35:03 +08)" executed successfully
+INFO:httpx:HTTP Request: GET https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb "HTTP/1.1 301 Moved Permanently"
+INFO:httpx:HTTP Request: GET https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb/ "HTTP/1.1 200 OK"
+INFO:app.ingestion.ktmb:KTMB poll ok: 8 vehicles (ts=2026-05-23T07:34:43.845971+00:00)
+INFO:apscheduler.executors.default:Job "poll_once (trigger: interval[0:00:20], next run at: 2026-05-23 15:35:03 +08)" executed successfully
+INFO:     127.0.0.1:64660 - "GET /lines/stats HTTP/1.1" 200 OK

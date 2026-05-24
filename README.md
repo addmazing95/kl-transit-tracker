@@ -1,171 +1,192 @@
 # KL Transit Tracker
 
-Locally-run live dashboard for Kuala Lumpur public transport — rail-first.
-Vehicles render as dots over a Greater KL map, with line overlays from GTFS
-static shapes. Refreshes every 60 seconds. Detects disruptions by analysing
-poll-over-poll movement. Reports weekly reliability stats. Aggregates news
-from RSS + lightweight HTML scrapers.
+A live dashboard for Kuala Lumpur's rail network — MRT, LRT, Monorail, KTM
+Komuter. Trains render as direction-aware dots over a pastel vector map,
+stations as ringed markers. The backend polls every 20 seconds, detects
+disruptions from movement, rolls up weekly reliability stats, and aggregates
+news from public RSS sources.
 
-## Data sources
-
-- **[data.gov.my GTFS-RT](https://developer.data.gov.my/realtime-api/gtfs-realtime)**
-  - **KTMB**: live vehicle positions every 30 s (we poll at 60 s)
-  - **Prasarana rapid-rail-kl** (MRT/LRT/Monorail): static GTFS only — no
-    realtime feed yet. We simulate dots from the static schedule and tag them
-    `scheduled`. The `RAPID_RAIL_LIVE` flag in `.env` flips to real feed
-    when Prasarana ships it.
-- News: Google News RSS + MyRapid + KTMB HTML scrapers (15 min cadence).
-
-All free. No paid APIs.
-
-## Two ways to run
-
-| | Local (venv) | Docker |
-|---|---|---|
-| Setup time | one-off pip + npm install | `docker compose up --build` |
-| HMR on frontend edits | yes (Vite dev) | no (static bundle via nginx) |
-| Best for | active development | clean reproducible runs, sharing |
-| Instructions | this README, below | [docker/README.md](docker/README.md) |
-
-Both share the same `./data/` folder, so the SQLite DB persists across either mode.
-
-## Stack
-
-- **Backend**: Python 3.11+, FastAPI, SQLAlchemy 2 + SQLite (WAL),
-  APScheduler, httpx, `gtfs-realtime-bindings`, `feedparser`, `selectolax`
-- **Frontend**: Vite + React 18 + TypeScript, Leaflet + react-leaflet,
-  TanStack Query, Tailwind, Recharts
-
-## Setup (one-time)
-
-From `C:\Users\User\KL Transit Tracker` in PowerShell:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -e .\backend
-npm install --prefix .\frontend
-Copy-Item .env.example .env   # optional, defaults work
-
-# Download static GTFS for KTMB + Prasarana rail
-.\.venv\Scripts\python.exe scripts\bootstrap_static.py
-
-# Seed 7 days of demo reliability data so the Reliability page is populated
-.\.venv\Scripts\python.exe scripts\seed_demo.py --days 7
-```
-
-## Run
-
-Two terminals — or use the launcher:
-
-```powershell
-.\scripts\dev.ps1
-```
-
-This opens two PowerShell windows: backend on **127.0.0.1:8000**, frontend on
-**127.0.0.1:5173**. Closing either window stops that side. Nothing runs in the
-background.
-
-Manual equivalent:
-
-```powershell
-# Terminal 1
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
-
-# Terminal 2
-npm run dev --prefix .\frontend
-```
-
-Then open <http://127.0.0.1:5173>.
+Runs entirely on your own machine via Docker. **No API keys, no cloud
+accounts, no recurring cost.**
 
 ## Features
 
-### Map (`/`)
-- All KL rail lines drawn from GTFS shapes (MRT/LRT) and stop sequences (KTMB)
-- **Live KTMB dots** — green badge, updated via WebSocket every 60 s
-- **Simulated MRT/LRT/Monorail dots** — grey "scheduled" badge, animated along
-  the static schedule with realistic per-kind headways (MRT 6 min, LRT 4 min,
-  Monorail 10 min). ~160 simulated trains visible at midday.
-- Click a dot → side drawer with vehicle/trip details, speed, bearing
-- Legend toggles route kinds (MRT, LRT, Monorail, KTM, BRT)
-- Live status pill (top-right) — connection state + vehicle count + last update
-- Disruption banner (top-center) when any `crit` event is active
+- **Live map** with direction arrows derived from poll-to-poll movement
+- **Stuck detection** — pulsing red halo on any vehicle motionless for three consecutive polls
+- **Per-line trains-in-service panel** — collapsible, with terminus-by-terminus direction split
+- **Disruption banner** — surfaces critical events (STUCK / MISSING / LINE_DOWN) in real time
+- **Weekly reliability page** — per-route on-time %, mean delay, daily trend chart
+- **Disruption news feed** — Google News + MyRapid + KTMB scrapers, auto-tagged by line + category
+- **Pastel light theme** — easy on the eyes, station vs train clearly distinguishable
 
-### Reliability (`/reliability`)
-- Last 7 days of per-route on-time %
-- Daily trend line chart
-- Per-route table: on-time %, mean delay, observed vs scheduled trips
-- Filterable by route kind
+## Data sources
 
-### News (`/news`)
-- Aggregated from Google News, MyRapid, KTMB
-- Auto-tagged: `disruption`, `maintenance`, `safety`, `operations` +
-  per-line tags (`lrt-kelana-jaya`, `mrt-kajang`, etc.)
-- Filter by tag or source
-- Polls every 15 min
+| Source | Use |
+|---|---|
+| [data.gov.my GTFS-realtime](https://developer.data.gov.my/realtime-api/gtfs-realtime) | Live KTMB vehicle positions (30s refresh upstream) |
+| [data.gov.my GTFS-static](https://developer.data.gov.my/realtime-api/gtfs-static) | KTMB + Prasarana rail line geometry, stops, schedule |
+| [OpenFreeMap](https://openfreemap.org/) | Free vector tiles, no API key |
+| Google News RSS, myrapid.com.my, ktmb.com.my | Disruption news scraping |
 
-## Testing the disruption banner
+**Note**: Prasarana's `rapid-rail-kl` (MRT/LRT/Monorail) doesn't yet have a stable
+realtime feed on data.gov.my. Those trains are simulated from the static
+schedule and tagged `scheduled` in the UI. A `RAPID_RAIL_LIVE` env flag flips
+to live data the day Prasarana ships the feed.
 
-```powershell
-.\.venv\Scripts\python.exe scripts\seed_demo.py --demo-disruption
-# Banner should appear within 30 seconds of opening the Map page.
+## Quick start
+
+### 1. Install Docker Desktop
+
+Download from <https://www.docker.com/products/docker-desktop/>, install, and
+launch it. Wait until the whale icon stops animating.
+
+Verify in your terminal:
+
+```bash
+docker --version
+docker compose version
 ```
 
-To test STUCK detection against the live KTMB feed:
+### 2. Clone and run
 
-```powershell
-.\.venv\Scripts\python.exe scripts\seed_demo.py --stuck KTM_TEST_001
-# After the next disruption sweep (~60s), the banner shows STUCK for KTM_TEST_001.
+```bash
+git clone https://github.com/addmazing95/kl-transit-tracker.git
+cd kl-transit-tracker
+docker compose up --build
 ```
+
+First build takes ~2–3 minutes (pulls base images, installs Python deps,
+builds the React bundle, bootstraps GTFS static data). When you see both
+of these in the logs you're ready:
+
+```
+klt-backend   | [entrypoint] bootstrap complete.
+klt-backend   | INFO:     Uvicorn running on http://0.0.0.0:8000
+klt-frontend  | nginx: worker process started
+```
+
+### 3. Open the dashboard
+
+<http://localhost:5173>
+
+### 4. (Optional) Seed demo data
+
+The Reliability page needs ~7 days of trip data to look interesting; the
+disruption banner needs at least one event. From a second terminal:
+
+```bash
+docker compose exec backend python /app/scripts/seed_demo.py --days 7
+docker compose exec backend python /app/scripts/seed_demo.py --demo-disruption
+```
+
+Refresh the Reliability and Map tabs.
+
+## Day-to-day commands
+
+| Command | What it does |
+|---|---|
+| `docker compose up -d` | Start in the background (no terminal window kept open) |
+| `docker compose down` | Stop containers, keep your data |
+| `docker compose down -v && rm -rf ./data` | Stop and wipe everything for a fresh start |
+| `docker compose ps` | Show container status + health |
+| `docker compose logs -f backend` | Tail backend logs |
+| `docker compose restart backend` | Bounce just the backend |
+| `docker compose exec backend sh` | Shell into the backend container |
+| `git pull && docker compose up -d --build` | Pull updates from GitHub and rebuild |
+
+## Persistence
+
+Everything writable lives in `./data/`:
+
+- `transit.db` — SQLite with routes, stops, observations, news items
+- `gtfs_cache/` — downloaded GTFS zip files
+
+That folder is bind-mounted into the container, so `docker compose down`
+preserves your history. To start completely clean, delete it.
 
 ## API
 
-| Endpoint                    | Purpose |
-|-----------------------------|---------|
-| `GET /health`               | Liveness check |
-| `GET /lines`                | Catalog: routes + shapes + stops (cached in-process) |
-| `GET /vehicles`             | Latest in-memory snapshot (filter by `route_id`, `agency_id`) |
-| `WS /ws/positions`          | Push of full vehicle snapshot on every poll |
-| `GET /disruptions`          | Active events + recent (24h) |
-| `GET /reliability/weekly`   | Per-route on-time stats (`?days=N`) |
-| `GET /news`                 | Tagged news items (`?days=N&tag=...&limit=N`) |
+The backend exposes a small REST + WebSocket surface at `http://localhost:8000`:
 
-## Project layout
+| Endpoint | Returns |
+|---|---|
+| `GET /health` | liveness check |
+| `GET /lines` | catalog: routes + shapes + stops (cached) |
+| `GET /lines/stats` | live count of trains per route, split by direction |
+| `GET /vehicles` | latest in-memory snapshot (filter via `?route_id=` / `?agency_id=`) |
+| `WS /ws/positions` | push of full vehicle snapshot every poll cycle |
+| `GET /disruptions` | active + recent (24h) disruption events |
+| `GET /reliability/weekly` | per-route on-time stats (`?days=N`) |
+| `GET /news` | tagged news items (`?days=N&tag=...&limit=N`) |
+
+## Configuration
+
+All knobs are environment variables, set in `docker-compose.yml` under
+`services.backend.environment`:
+
+| Var | Default | Meaning |
+|---|---|---|
+| `POLL_INTERVAL_SECONDS` | `20` | Cadence for KTMB poll + simulator tick |
+| `NEWS_SCRAPE_INTERVAL_MINUTES` | `15` | News scraper cadence |
+| `RAPID_RAIL_LIVE` | `false` | Flip to `true` when Prasarana ships realtime rail |
+| `LOG_LEVEL` | `INFO` | DEBUG / INFO / WARNING |
+| `TIMEZONE` | `Asia/Kuala_Lumpur` | Used by the simulator + daily rollup |
+
+Edit the file, then `docker compose up -d` to apply.
+
+## Project structure
 
 ```
-KL Transit Tracker/
-├─ backend/
+kl-transit-tracker/
+├─ backend/                FastAPI app
 │  └─ app/
 │     ├─ main.py, config.py, db.py, models.py, scheduler.py
-│     ├─ gtfs/static_loader.py, gtfs/rt_client.py
-│     ├─ ingestion/{ktmb.py, rapid_rail_sim.py, disruption.py, state.py}
-│     ├─ reliability/{observer.py, rollup.py}
-│     ├─ news/{scrapers.py, classifier.py}
-│     └─ api/{lines.py, vehicles.py, ws_positions.py,
-│             disruptions.py, reliability.py, news.py}
-├─ frontend/
+│     ├─ gtfs/             static loader + GTFS-rt protobuf client
+│     ├─ ingestion/        live polling, simulator, disruption detector
+│     ├─ reliability/      arrival observer + daily rollup
+│     ├─ news/             RSS + HTML scrapers + classifier
+│     └─ api/              FastAPI routers
+├─ frontend/               Vite + React + TypeScript + MapLibre
 │  └─ src/
-│     ├─ pages/{MapView, Reliability, News}.tsx
-│     ├─ components/Map/{LineLayer, VehicleDots, VehicleDrawer, Legend}.tsx
-│     ├─ components/DisruptionBanner.tsx
-│     ├─ hooks/usePositionsWS.ts
-│     └─ api/{client.ts, hooks.ts}
-├─ data/         SQLite DB + GTFS zip cache (gitignored)
-├─ scripts/      bootstrap_static.py, seed_demo.py, dev.ps1
-└─ README.md
+│     ├─ pages/            MapView, Reliability, News
+│     ├─ components/Map/   LineLayer, VehicleDots, VehicleDrawer, Legend, TrainsPanel
+│     └─ hooks/, api/
+├─ scripts/                bootstrap_static.py, seed_demo.py
+├─ docker/                 entrypoint.sh, nginx.conf, docker-specific README
+├─ Dockerfile.backend
+├─ Dockerfile.frontend
+└─ docker-compose.yml
 ```
 
-## Costs
+## Tech stack
 
-**Zero.** All data and software is free. Runs entirely on your laptop, only
-when you launch it. Nothing in the background, no daemons, no cloud bills.
+- **Backend**: Python 3.12, FastAPI, SQLAlchemy 2, SQLite (WAL), APScheduler,
+  httpx, `gtfs-realtime-bindings`, `feedparser`, `selectolax`
+- **Frontend**: Vite + React 18 + TypeScript, MapLibre GL JS + react-map-gl,
+  TanStack Query, Tailwind CSS, Recharts
+- **Tiles**: [OpenFreeMap](https://openfreemap.org/) (positron style)
+- **Runtime**: Docker + nginx (frontend) + uvicorn (backend)
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `port already allocated` | something else on 8000 or 5173 | kill the other process, or edit the port mapping in `docker-compose.yml` |
+| `entrypoint.sh: no such file` | Git converted line endings on Windows | `git checkout -- docker/entrypoint.sh` then `docker compose up --build` |
+| Map empty, "0 veh" | KL is in the 00:00–06:00 service dead zone | wait until ~06:00 local, or inject a fake train: `docker compose exec backend python /app/scripts/seed_demo.py --stuck TEST_001` |
+| Backend can't reach data.gov.my | corporate firewall / VPN | test `curl https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb` from your host |
+| Reliability page empty | no observations yet | run the seed-demo command above |
 
 ## Limitations
 
-- KTMB GTFS-RT doesn't include `route_id`, only `trip_id` — live trains
+- KTMB's GTFS-RT feed doesn't include `route_id`, only `trip_id` — live trains
   currently render in neutral color until a trip→route mapping is added.
-- Prasarana static GTFS ships only canonical trips, not full timetables — the
-  simulator cycles canonical trips at typical headways to approximate reality.
-- The reliability observer needs `route_id` on live polls to work; with seeded
-  demo data the page is fully functional, real-world rollups will sparse until
-  data.gov.my fixes route_id on KTMB feeds.
+- Prasarana's static GTFS ships only canonical trips per direction; the
+  simulator cycles them at typical headways (MRT 6 min, LRT 4 min, Monorail
+  10 min) to approximate reality.
+- Real-world reliability rollups will be sparse until KTMB exposes `route_id`;
+  seeded demo data fills the gap meanwhile.
+
+## License
+
+MIT — see [LICENSE](LICENSE). All data and software used is free / open source.

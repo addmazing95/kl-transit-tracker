@@ -1,11 +1,12 @@
-# Docker version
+# Docker reference
 
-A containerised version of KL Transit Tracker that runs the **same code** as
-the local build, but in two long-running containers — one for FastAPI, one for
-the React bundle served via nginx.
+Detailed reference for the Docker deployment. For the quick-start, see the
+[root README](../README.md).
 
-The original local-venv workflow described in the root `README.md` still works
-unchanged. Pick whichever fits your moment.
+The stack is two long-running containers:
+
+- `backend` — FastAPI + APScheduler + scrapers, on port 8000
+- `frontend` — nginx serving the built React bundle, on port 5173 (mapped to nginx :80 internally)
 
 ## Prerequisites
 
@@ -40,8 +41,8 @@ docker compose down -v         # stop and discard local data volume
 | Logs | container stdout | `docker compose logs -f backend` |
 | Config | env vars in `docker-compose.yml` | edit compose file & `up` again |
 
-The `./data` folder is shared with the local-venv build, so switching between
-"local" and "Docker" preserves your database.
+Persisting via bind-mount means `docker compose down` keeps your data;
+`docker compose down -v && rm -rf ./data` wipes everything for a fresh start.
 
 ## First boot
 
@@ -88,22 +89,20 @@ docker build -f Dockerfile.frontend \
 
 These values are baked into the bundle at build time.
 
-## Differences vs the local-venv build
-
-| | Local (venv) | Docker |
-|---|---|---|
-| Backend host | 127.0.0.1 | 0.0.0.0 (inside container) |
-| Frontend serving | Vite dev (HMR) | Static bundle via nginx |
-| DB path | `./data/transit.db` (cwd-relative) | `/data/transit.db` (absolute, via volume) |
-| Bootstrap | `python scripts/bootstrap_static.py` once | Auto on first boot |
-| Restart policy | manual | `unless-stopped` |
-
-No source code differs between the two modes — Docker only adds 4 files:
-`Dockerfile.backend`, `Dockerfile.frontend`, `docker-compose.yml`, plus
-`docker/{nginx.conf, entrypoint.sh}`.
-
 ## CORS
 
-The backend already allows `http://localhost:5173`, which is why the Docker
-frontend port is mapped to `5173:80`. If you change the host port, also extend
-the CORS list in `backend/app/main.py` (or wire it to an env var).
+The backend allows `http://localhost:5173`, which is why the frontend port is
+mapped to `5173:80`. If you change the host port, also extend the CORS
+allowlist in `backend/app/main.py` (or wire it to an env var).
+
+## Rebuilding after code changes
+
+After `git pull` or local edits:
+
+```bash
+docker compose up -d --build
+```
+
+Backend code changes trigger a re-install of the Python package layer.
+Frontend code changes trigger a fresh `npm install + build`. Both layers are
+cached when only `docker-compose.yml` or `docker/*` files change.

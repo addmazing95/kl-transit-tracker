@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -27,9 +28,22 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="KL Transit Tracker", version="0.1.0", lifespan=lifespan)
 
+# CORS: configurable via env so remote hosts (Codespaces, PWD, a cloud VM)
+# can serve the bundle from one domain while calling the backend on another.
+#   CORS_ORIGINS=*                            → allow any origin (self-hosted, no auth)
+#   CORS_ORIGINS=https://foo.com,https://bar  → comma-separated allowlist
+#   (unset)                                   → localhost dev defaults
+_cors_env = os.environ.get("CORS_ORIGINS", "").strip()
+if _cors_env == "*":
+    _cors_origins: list[str] = ["*"]
+elif _cors_env:
+    _cors_origins = [o.strip() for o in _cors_env.split(",") if o.strip()]
+else:
+    _cors_origins = ["http://127.0.0.1:5173", "http://localhost:5173"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_origins=_cors_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

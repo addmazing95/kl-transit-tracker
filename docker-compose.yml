@@ -28,6 +28,9 @@ services:
       POLL_INTERVAL_SECONDS: "20"
       NEWS_SCRAPE_INTERVAL_MINUTES: "15"
       RAPID_RAIL_LIVE: "false"
+      # Allow any origin: this is a self-hosted dashboard with no auth and only
+      # public-data endpoints, so locking down CORS adds friction without value.
+      CORS_ORIGINS: "*"
     volumes:
       - ./data:/data
 
@@ -36,9 +39,12 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        # Browser hits the backend through the host port mapping above.
-        VITE_API_BASE: http://localhost:8000
-        VITE_WS_BASE: ws://localhost:8000
+        # Leave these unset so the bundle derives the backend URL from
+        # window.location at runtime. The same image then works on localhost,
+        # a cloud VM, Codespaces, or Play with Docker without rebuilding.
+        # Override here only if backend lives on a different host:
+        # VITE_API_BASE: https://api.example.com
+        # VITE_WS_BASE: wss://api.example.com
     image: kl-transit-tracker-frontend:local
     container_name: klt-frontend
     restart: unless-stopped

@@ -1,0 +1,9 @@
+# Shell scripts must stay LF — otherwise Docker's `/bin/sh` won't find them
+# after Git's autocrlf converts them to CRLF on Windows checkout.
+*.sh text eol=lf
+docker/entrypoint.sh text eol=lf
+
+# Same for Dockerfiles — kept consistent across hosts.
+Dockerfile* text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

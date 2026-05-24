@@ -1,0 +1,50 @@
+# Docker version of KL Transit Tracker.
+# The local venv-based workflow in the README still works exactly the same.
+#
+# Quick start:
+#   docker compose up --build
+#   # then open http://localhost:5173
+#
+# Backend bootstraps GTFS static data on first run, persists everything to
+# the ./data/ folder via a bind mount so it survives container restarts.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: kl-transit-tracker-backend:local
+    container_name: klt-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_HOST: "0.0.0.0"
+      APP_PORT: "8000"
+      LOG_LEVEL: INFO
+      TIMEZONE: Asia/Kuala_Lumpur
+      DATABASE_URL: sqlite:////data/transit.db
+      GTFS_CACHE_DIR: /data/gtfs_cache
+      POLL_INTERVAL_SECONDS: "20"
+      NEWS_SCRAPE_INTERVAL_MINUTES: "15"
+      RAPID_RAIL_LIVE: "false"
+    volumes:
+      - ./data:/data
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        # Browser hits the backend through the host port mapping above.
+        VITE_API_BASE: http://localhost:8000
+        VITE_WS_BASE: ws://localhost:8000
+    image: kl-transit-tracker-frontend:local
+    container_name: klt-frontend
+    restart: unless-stopped
+    ports:
+      # Use 5173 to match the existing CORS allowlist in the backend code.
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy

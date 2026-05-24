@@ -1,0 +1,29 @@
+# Keep Docker images small and free of host-only state.
+.git
+.gitignore
+.vscode
+.idea
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+venv
+
+# Node
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# Local runtime data (mounted as a volume in compose)
+data
+
+# OS / editor cruft
+.DS_Store
+*.swp
+
+# Docs not needed inside images
+*.md
+!frontend/index.html

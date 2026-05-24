@@ -18,6 +18,17 @@ from RSS + lightweight HTML scrapers.
 
 All free. No paid APIs.
 
+## Two ways to run
+
+| | Local (venv) | Docker |
+|---|---|---|
+| Setup time | one-off pip + npm install | `docker compose up --build` |
+| HMR on frontend edits | yes (Vite dev) | no (static bundle via nginx) |
+| Best for | active development | clean reproducible runs, sharing |
+| Instructions | this README, below | [docker/README.md](docker/README.md) |
+
+Both share the same `./data/` folder, so the SQLite DB persists across either mode.
+
 ## Stack
 
 - **Backend**: Python 3.11+, FastAPI, SQLAlchemy 2 + SQLite (WAL),
